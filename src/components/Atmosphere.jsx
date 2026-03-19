@@ -8,6 +8,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
 
   const particlesRef = useRef([]);
   const whistlesRef = useRef([]); // For Whistle hit sparkles
+  const tRef = useRef(0);
 
   useEffect(() => {
     particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => ({
@@ -24,15 +25,15 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
     if (osuEvent.hasWhistle) {
       for(let i=0; i<5; i++) {
         whistlesRef.current.push({
-          x: mousePos.x + (Math.random() * 100 - 50),
-          y: mousePos.y + (Math.random() * 100 - 50),
+          x: (window.innerWidth * 0.5) + (Math.random() * 200 - 100),
+          y: (window.innerHeight * 0.5) + (Math.random() * 200 - 100),
           life: 1.0,
           dx: (Math.random() * 4 - 2),
           dy: (Math.random() * 4 - 2)
         });
       }
     }
-  }, [osuEvent, mousePos]);
+  }, [osuEvent]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -47,23 +48,24 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
     window.addEventListener('resize', handleResize);
 
     const render = () => {
+      tRef.current += 0.016;
       const width = canvas.width;
       const height = canvas.height;
       const cx = width / 2;
       const cy = height / 2;
 
       // Dark background trail factor
-      const trailFactor = intensity > 1.0 || mode.includes('BUILD_UP') ? 0.3 : 0.8;
+      const trailFactor = intensity > 1.0 || mode.includes('BUILD_UP') ? 0.3 : 0.85;
       ctx.fillStyle = `rgba(2, 6, 23, ${trailFactor})`; // Slate-950
       ctx.fillRect(0, 0, width, height);
 
       // Modes
-      const isPreBuildUp = mode.includes('BUILD_UP_1') || mode === 'PRE_DROP_2';
-      const isBuildUp = mode === 'BUILD_UP_2' || mode === 'BUILD_UP_1' && intensity > 0.4;
-      
-      const targetMouseX = mousePos.x - cx;
-      const targetMouseY = mousePos.y - cy;
-      
+      const isRest = mode.startsWith('REST') || mode === 'MELODY_ONLY';
+      const isVerse = mode.startsWith('VERSE');
+      const isPreBuildUp = mode.startsWith('PRE_BUILD');
+      const isBuildUp = mode.includes('BUILD_UP');
+      const isDrop = mode.startsWith('DROP');
+
       const speed = 2 * (1 + intensity * 5) * (1 + motionScale);
 
       for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -73,46 +75,55 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
         p.oy = p.y;
         
         if (isPreBuildUp) {
-          // Centripetal: move towards center X/Y
+          // Signal warning: jitter + slight centripetal pull (autonomous).
           const dx = cx - p.x;
           const dy = cy - p.y;
-          p.x += dx * 0.05 * intensity;
-          p.y += dy * 0.05 * intensity;
-          p.z -= speed * 0.5; // slow down forward motion
+          const jitter = (Math.random() - 0.5) * 6 * Math.min(1, intensity);
+          p.x += dx * 0.01 * intensity + jitter;
+          p.y += dy * 0.01 * intensity - jitter;
+          p.z -= speed * 0.6;
         } else if (isBuildUp) {
           // Vertical streams
-          p.y -= speed * 3;
+          p.y -= speed * 3.5;
+          p.x += Math.sin(tRef.current + i * 0.05) * (0.4 + intensity);
         } else {
           // Normal Z movement towards camera
           p.z -= speed;
-        }
-
-        // Mouse suction (if close)
-        if (!isPreBuildUp && !isBuildUp) {
-           const dxM = mousePos.x - p.x;
-           const dyM = mousePos.y - p.y;
-           const distM = Math.sqrt(dxM*dxM + dyM*dyM);
-           if (distM < 200) {
-              p.x += dxM * 0.02;
-              p.y += dyM * 0.02;
-           }
+          if (isVerse) {
+            // Verse: slow vertical drift downwards (stable transmission feel).
+            p.y += (0.6 + intensity) * (0.8 + motionScale);
+          } else if (isRest) {
+            // Rest: very slow drift.
+            p.y += 0.2;
+          } else if (isDrop) {
+            // Drop: slight turbulence without cursor coupling.
+            p.x += (Math.random() - 0.5) * (0.8 + intensity);
+            p.y += (Math.random() - 0.5) * (0.6 + intensity);
+          }
         }
 
         // Reset Out of Bounds
-        if (p.z <= 0 || p.y < 0 || (isPreBuildUp && Math.abs(cx - p.x) < 5 && Math.abs(cy - p.y) < 5)) {
+        if (
+          p.z <= 0 ||
+          p.y < -200 ||
+          p.y > height + 200 ||
+          p.x < -200 ||
+          p.x > width + 200 ||
+          (isPreBuildUp && Math.abs(cx - p.x) < 5 && Math.abs(cy - p.y) < 5)
+        ) {
             p.z = 1000;
-            p.x = Math.random() * width - (isBuildUp ? 0 : targetMouseX);
-            p.y = isBuildUp ? height + Math.random() * 100 : Math.random() * height - targetMouseY;
+            p.x = Math.random() * width;
+            p.y = isBuildUp ? height + Math.random() * 200 : Math.random() * height;
             p.ox = p.x;
             p.oy = p.y;
         }
 
         // Calculate mapped positions
-        const x = (p.x - cx) * (1000 / p.z) + cx + (targetMouseX * p.z / 2000);
-        const y = (p.y - cy) * (1000 / p.z) + cy + (targetMouseY * p.z / 2000);
+        const x = (p.x - cx) * (1000 / p.z) + cx;
+        const y = (p.y - cy) * (1000 / p.z) + cy;
 
-        const ox = (p.ox - cx) * (1000 / p.z) + cx + (targetMouseX * p.z / 2000);
-        const oy = (p.oy - cy) * (1000 / p.z) + cy + (targetMouseY * p.z / 2000);
+        const ox = (p.ox - cx) * (1000 / p.z) + cx;
+        const oy = (p.oy - cy) * (1000 / p.z) + cy;
 
         const size = Math.max(0.5, (1 - p.z / 1000) * 3);
         const alpha = Math.max(0.1, 1 - p.z / 1000);
@@ -130,11 +141,6 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
           ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx.arc(x, y, size, 0, Math.PI * 2);
           ctx.fill();
-        }
-
-        if (!isPreBuildUp && !isBuildUp) {
-            p.x = (x - cx - targetMouseX * p.z/2000) * p.z / 1000 + cx;
-            p.y = (y - cy - targetMouseY * p.z/2000) * p.z / 1000 + cy;
         }
       }
 
@@ -164,7 +170,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [intensity, motionScale, mousePos, mode]);
+  }, [intensity, motionScale, mode]);
 
   return (
     <canvas 

@@ -19,7 +19,9 @@ function App() {
     motionScale,
     mode,
     play,
-    osuEvent
+    osuEvent,
+    volume,
+    setVolume
   } = useSatelliteSync();
 
   useEffect(() => {
@@ -69,19 +71,33 @@ function App() {
               <Atmosphere intensity={intensity} motionScale={motionScale} mousePos={mousePos} mode={mode} osuEvent={osuEvent} />
               
               <div className="hud-info" style={{ 
-                 opacity: mode === 'REST' || mode === 'OUTRO' ? 0 : 1, 
+                 opacity: mode === 'OUTRO' ? 0 : 1, 
                  transition: 'opacity 1s' 
               }}>
                 <div>SYS.STAT: {currentStructure.label}</div>
-                <div>TIMECODE: {currentTime.toFixed(3)}s</div>
-                <div>ANOMALY: {mode}</div>
                 <div>ENERGY: {(intensity * 100).toFixed(0)}%</div>
                 <div>MASK: {osuEvent.mask.toString(2).padStart(4, '0')}</div>
               </div>
 
-              <NodeGallery mode={mode} osuEvent={osuEvent} mousePos={mousePos} />
+              <NodeGallery mode={mode} osuEvent={osuEvent} mousePos={mousePos} intensity={intensity} />
               
               <LyricDisplay currentTime={currentTime} mode={mode} />
+
+              <div className="volume-control" style={{ 
+                 opacity: mode === 'OUTRO' ? 0 : 1, 
+                 transition: 'opacity 1s',
+                 pointerEvents: mode === 'OUTRO' ? 'none' : 'auto' 
+              }}>
+                <input
+                  aria-label="Volume"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={(e) => setVolume(e.target.value)}
+                />
+              </div>
             </>
           )}
           

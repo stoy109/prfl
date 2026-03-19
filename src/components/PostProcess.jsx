@@ -6,6 +6,7 @@ export function PostProcess({ children, mode, osuEvent }) {
 
   const isResting = mode === 'REST' || mode === 'LOST_MELODY';
   const isDrop = mode === 'DROP_1' || mode === 'DROP_2';
+  const heavyGlitch = mode === 'INTRO' || mode.includes('BUILD_UP') || mode === 'OUTRO' || mode === 'BUILD_UP_FINAL';
   
   // Finish hit causes Chromatic Aberration flash
   useEffect(() => {
@@ -20,7 +21,8 @@ export function PostProcess({ children, mode, osuEvent }) {
   const filterStyle = [
     isResting ? 'blur(4px)' : 'blur(0px)',
     isResting ? 'grayscale(100%) contrast(0.5)' : 'grayscale(0%) contrast(1)',
-    mode === 'DROP_2' ? 'hue-rotate(90deg)' : 'hue-rotate(0deg)'
+    heavyGlitch ? 'contrast(1.35) saturate(1.15) hue-rotate(10deg)' : 'contrast(1) saturate(1) hue-rotate(0deg)',
+    mode === 'DROP_2' ? 'hue-rotate(90deg)' : ''
   ].join(' ');
 
   // Global vignette: vignette yang sangat kabur pada Rest, bloom pada Drop

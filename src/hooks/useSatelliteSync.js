@@ -6,13 +6,21 @@ import hitobjectsData from '../hitobjects.json';
 export function useSatelliteSync() {
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolumeState] = useState(() => {
+    const raw = sessionStorage.getItem('satellite.volume');
+    const parsed = raw ? Number(raw) : 1;
+    if (!Number.isFinite(parsed)) return 1;
+    return Math.min(1, Math.max(0, parsed));
+  });
   const soundRef = useRef(null);
   const requestRef = useRef(null);
+  const driftRef = useRef(null);
 
   useEffect(() => {
     soundRef.current = new Howl({
       src: ['/audio.mp3'],
       html5: true,
+      volume,
       onplay: () => setIsPlaying(true),
       onpause: () => setIsPlaying(false),
       onend: () => setIsPlaying(false)
@@ -21,12 +29,21 @@ export function useSatelliteSync() {
     return () => {
       if (soundRef.current) soundRef.current.unload();
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
+      if (driftRef.current) clearInterval(driftRef.current);
     };
   }, []);
 
   const play = () => { if (soundRef.current && !isPlaying) soundRef.current.play(); };
   const pause = () => { if (soundRef.current && isPlaying) soundRef.current.pause(); };
   const toggle = () => { isPlaying ? pause() : play(); };
+
+  const setVolume = (next) => {
+    const v = Math.min(1, Math.max(0, Number(next)));
+    if (!Number.isFinite(v)) return;
+    setVolumeState(v);
+    sessionStorage.setItem('satellite.volume', String(v));
+    if (soundRef.current) soundRef.current.volume(v);
+  };
 
   useEffect(() => {
     const updateTime = () => {
@@ -48,8 +65,26 @@ export function useSatelliteSync() {
     };
   }, [isPlaying]);
 
+  // Audio drift correction: force state correction every 500ms.
+  useEffect(() => {
+    if (!soundRef.current) return;
+
+    driftRef.current = setInterval(() => {
+      if (!soundRef.current || !isPlaying) return;
+      const t = soundRef.current.seek();
+      if (typeof t !== 'number') return;
+
+      // If React state has drifted (tab throttling, raf hiccups), snap back.
+      if (Math.abs(t - currentTime) > 0.1) setCurrentTime(t);
+    }, 500);
+
+    return () => {
+      if (driftRef.current) clearInterval(driftRef.current);
+    };
+  }, [isPlaying, currentTime]);
+
   const currentStructure = SONG_STRUCTURE.find(
-    (section) => currentTime >= section.start && currentTime <= section.end
+    (section) => currentTime >= section.start && currentTime < section.end
   ) || SONG_STRUCTURE[0];
 
   const intensity = currentStructure ? currentStructure.intensity : 0;
@@ -87,6 +122,8 @@ export function useSatelliteSync() {
     pause,
     toggle,
     isPlaying,
+    volume,
+    setVolume,
     osuEvent: {
       isHit,
       hasNormal,

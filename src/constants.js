@@ -1,16 +1,22 @@
 export const SONG_STRUCTURE = [
-  { start: 0, end: 16.85, mode: 'INTRO', label: 'Initializing Sat-OS...', intensity: 0.1, motionScale: 0.2 },
-  { start: 16.85, end: 43.99, mode: 'VERSE_1', label: 'Scanning Fairytales', intensity: 0.3, motionScale: 0.5 },
-  { start: 44, end: 68.99, mode: 'BUILD_UP_1', label: 'Signal Weakening', intensity: 0.6, motionScale: 1.2 },
-  { start: 69, end: 81.99, mode: 'DROP_1', label: 'SATELLITE CONNECTED', intensity: 1.0, motionScale: 2.5 },
-  { start: 82, end: 132.99, mode: 'VERSE_1_CONT', label: 'Orbital Pathing', intensity: 0.4, motionScale: 0.6 },
-  { start: 133, end: 157.46, mode: 'REST', label: 'Silent Orbit...', intensity: 0.05, motionScale: 0.1 },
-  { start: 157.47, end: 183.99, mode: 'VERSE_2', label: 'Ancient Signals', intensity: 0.3, motionScale: 0.5 },
-  { start: 184, end: 195.99, mode: 'LOST_MELODY', label: 'Lost in Space', intensity: 0.1, motionScale: 0.3 },
-  { start: 196, end: 208.99, mode: 'BUILD_UP_2', label: 'Re-entry Sequence', intensity: 0.7, motionScale: 1.5 },
-  { start: 209, end: 221.99, mode: 'PRE_DROP_2', label: 'Critical Mass', intensity: 0.9, motionScale: 2.0 },
-  { start: 222, end: 275.99, mode: 'DROP_2', label: 'SUPERNOVA', intensity: 1.5, motionScale: 3.5 },
-  { start: 276, end: 320, mode: 'OUTRO', label: 'Signal Terminated', intensity: 0.0, motionScale: 0.0 }
+  { start: 0, end: 17.197, mode: 'INTRO', label: 'INITIALIZING...', intensity: 0.15, motionScale: 0.25 },
+  { start: 17.198, end: 43.614, mode: 'VERSE_1', label: 'SCANNING_FAIRYTALES', intensity: 0.35, motionScale: 0.6 },
+  { start: 43.615, end: 68.99, mode: 'PRE_BUILD_1', label: 'SIGNAL_WARNING', intensity: 0.55, motionScale: 0.9 },
+  { start: 68.991, end: 81.99, mode: 'BUILD_UP_1', label: 'DATA_RUSH', intensity: 0.85, motionScale: 1.6 },
+  { start: 81.991, end: 125.00, mode: 'DROP_1', label: 'SATELLITE_CONNECTED', intensity: 1.25, motionScale: 2.8 },
+  { start: 125.001, end: 126.409, mode: 'REST_BRIEF', label: 'INTERRUPTION', intensity: 0.08, motionScale: 0.15 },
+  { start: 126.410, end: 133.710, mode: 'DROP_1_CONT', label: 'RE_CONNECTED', intensity: 1.15, motionScale: 2.6 },
+  { start: 133.711, end: 158.99, mode: 'REST_1', label: 'SILENT_ORBIT', intensity: 0.12, motionScale: 0.2 },
+  { start: 158.991, end: 183.88, mode: 'VERSE_2', label: 'ANCIENT_STREAM', intensity: 0.4, motionScale: 0.7 },
+  { start: 183.881, end: 196.389, mode: 'REST_2', label: 'VACUUM_SPACE', intensity: 0.1, motionScale: 0.18 },
+  { start: 196.390, end: 210.28, mode: 'PRE_BUILD_2', label: 'RE_ENTRY_PROC', intensity: 0.55, motionScale: 1.0 },
+  { start: 210.281, end: 222.038, mode: 'BUILD_UP_2', label: 'CRITICAL_MASS', intensity: 0.95, motionScale: 1.9 },
+  { start: 222.039, end: 248.200, mode: 'DROP_2', label: 'SUPERNOVA', intensity: 1.4, motionScale: 3.1 },
+  { start: 248.201, end: 251.98, mode: 'BUILD_UP_FINAL', label: 'FINAL_CHARGE', intensity: 1.05, motionScale: 2.2 },
+  { start: 251.981, end: 266.981, mode: 'DROP_3', label: 'ULTRA_CONNECTED', intensity: 1.5, motionScale: 3.4 },
+  { start: 266.982, end: 267.727, mode: 'MELODY_ONLY', label: 'STARS_ONLY', intensity: 0.22, motionScale: 0.35 },
+  { start: 267.728, end: 274.259, mode: 'DROP_FINAL', label: 'DESTRUCTION', intensity: 1.6, motionScale: 3.7 },
+  { start: 274.260, end: 285.414, mode: 'OUTRO', label: 'SHUTDOWN', intensity: 0.05, motionScale: 0.1 }
 ];
 
 export const LYRIC_TIMINGS = [
