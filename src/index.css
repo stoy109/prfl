@@ -114,6 +114,8 @@ body, html {
 
 .social-node {
   position: absolute; /* Changed to absolute for ellipse orbit */
+  top: calc(50% - 2.5rem);
+  left: calc(50% - 2.5rem);
   display: flex;
   align-items: center;
   justify-content: center;
