@@ -7,7 +7,7 @@ export function BootOverlay({ actived, onActivate }) {
 
   useEffect(() => {
     if (actived) return;
-    
+
     let lastTime = 0;
     const handleMouseMove = (e) => {
       const now = Date.now();
@@ -26,7 +26,7 @@ export function BootOverlay({ actived, onActivate }) {
 
   if (actived) return null;
 
-  const titleChars = "SATELLITE OS V.01".split("");
+  const titleChars = "DYP OS".split("");
 
   return (
     <motion.div
@@ -68,11 +68,11 @@ export function BootOverlay({ actived, onActivate }) {
           </motion.span>
         ))}
       </div>
-      
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        transition={{ delay: 1 }} 
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
         className="boot-subtitle"
       >
         Click anywhere to synchronize

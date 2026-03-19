@@ -44,7 +44,7 @@ A high-fidelity, music-reactive personal profile page built with **React** and *
 ## 💖 Credits & Acknowledgments
 
 - **Presence API**: [Lanyard](https://lanyard.rest/) by Phineas for the Discord integration.
-- **Rhythm Data (Beatmap)**: Osu!mania chart metadata by [Blocko](https://osu.ppy.sh/users/4075092). Original beatmap used to drive the synchronized kinetic effects.
+- **Rhythm Data (Beatmap)**: Osu!mania chart metadata by [Blocko](https://osu.ppy.sh/beatmapsets/1773012#mania/3631139). Original beatmap used to drive the synchronized kinetic effects.
 - **Audio Credits**: The music used is "S.A.T.E.L.L.I.T.E." (composed by Camellia, sync logic mapped to the specific osu! metadata).
 
 ---
