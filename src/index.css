@@ -110,6 +110,8 @@ body, html {
   justify-content: center;
   pointer-events: auto;
   position: relative;
+  perspective: 1200px;
+  transform-style: preserve-3d;
 }
 
 .social-node {

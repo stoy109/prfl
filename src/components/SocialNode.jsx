@@ -15,22 +15,26 @@ export function SocialNode({ platform, url, color, icon, behavior, mode, osuEven
   const angle = (index / total) * Math.PI * 2;
   const isMerging = mode.includes('BUILD_UP_1') || mode === 'PRE_DROP_2';
   
-  // Base Orbit Radius
-  const a = window.innerWidth > 768 ? 300 : 150; 
-  const b = window.innerWidth > 768 ? 100 : 50;  
+  // Base Orbit Radius - increased for better spacing
+  const a = window.innerWidth > 768 ? 350 : 200;
+  const b = window.innerWidth > 768 ? 130 : 80;  
 
   const targetX = isMerging ? 0 : Math.cos(angle) * a;
   const targetZ = isMerging ? 0 : Math.sin(angle) * b;
   const targetY = isMerging ? 0 : targetZ * 0.5;
 
-  // UI Vibration during Build Up
+  // UI Vibration during Build Up - stable across renders
   const isBuildUp = mode.includes('BUILD_UP_2') || mode.includes('BUILD_UP_1');
-  const vibrateX = isBuildUp ? (Math.random() * 6 - 3) : 0;
-  const vibrateY = isBuildUp ? (Math.random() * 6 - 3) : 0;
+  const vibrateRef = useRef({ x: Math.random() * 6 - 3, y: Math.random() * 6 - 3 });
+  const vibrateX = isBuildUp ? vibrateRef.current.x : 0;
+  const vibrateY = isBuildUp ? vibrateRef.current.y : 0;
 
   // Rest state Blur Exception
   const isResting = mode === 'REST' || mode === 'LOST_MELODY';
   const blurValue = isResting && !hovered ? 'blur(4px)' : 'blur(0px)';
+
+  // Z-index based on z position for proper depth perception
+  const zIndex = Math.round((targetZ + b) * 10);
 
   return (
     <motion.a
@@ -56,6 +60,7 @@ export function SocialNode({ platform, url, color, icon, behavior, mode, osuEven
         damping: 30 
       }}
       className="social-node"
+      style={{ zIndex }}
     >
       <IconComponent 
         size={32} 
