@@ -378,3 +378,11 @@ body, html {
   width: 160px;
   accent-color: var(--accent-indigo);
 }
+
+/* Melody Visuals - Temporal Slider micro camera shake */
+@keyframes temporal-shake {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(1px, -1px); }
+  50% { transform: translate(-1px, 1px); }
+  75% { transform: translate(-1px, -1px); }
+}

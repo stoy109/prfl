@@ -5,6 +5,7 @@ import { BootOverlay } from './components/BootOverlay';
 import { Atmosphere } from './components/Atmosphere';
 import { NodeGallery } from './components/NodeGallery';
 import { LyricDisplay } from './components/LyricDisplay';
+import { MelodyVisuals } from './components/MelodyVisuals';
 import { PostProcess } from './components/PostProcess';
 import './index.css';
 
@@ -77,6 +78,8 @@ function App() {
           {activated && (
             <>
               <Atmosphere intensity={intensity} motionScale={motionScale} mousePos={mousePos} mode={mode} osuEvent={osuEvent} />
+
+              <MelodyVisuals currentTime={currentTime} mode={mode} intensity={intensity} />
 
               <div className="hud-info" style={{
                 opacity: mode === 'OUTRO' ? 0 : 1,
