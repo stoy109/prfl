@@ -98,6 +98,13 @@ export function NodeGallery({ mode, osuEvent, intensity }) {
 
     const onPointerDown = (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+      // Let interactive elements (like social links) receive normal click behavior.
+      if (e.target instanceof Element) {
+        const interactiveTarget = e.target.closest('a, button, input, textarea, select, label, [role="button"]');
+        if (interactiveTarget) return;
+      }
+
       manualControlRef.current = true;
       dragRef.current.active = true;
       dragRef.current.pointerId = e.pointerId;
