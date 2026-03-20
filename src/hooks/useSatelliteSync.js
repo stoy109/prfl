@@ -1,7 +1,19 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Howl } from 'howler';
 import { SONG_STRUCTURE } from '../constants';
 import hitobjectsData from '../hitobjects.json';
+
+function buildHitIndex(data) {
+  const index = new Map();
+  for (const h of data) {
+    const key = Math.floor(h.time * 20); // 50ms buckets
+    if (!index.has(key)) index.set(key, []);
+    index.get(key).push(h);
+  }
+  return index;
+}
+
+const HIT_INDEX = buildHitIndex(hitobjectsData);
 
 export function useSatelliteSync() {
   const [currentTime, setCurrentTime] = useState(0);
@@ -92,25 +104,39 @@ export function useSatelliteSync() {
   const mode = currentStructure ? currentStructure.mode : 'REST';
 
   // HitObjects Osu! Logic (50ms window for React renders to catch hit flags)
-  const windowTime = 0.05; 
-  const activeHits = hitobjectsData.filter(h => h.time <= currentTime && h.time > currentTime - windowTime);
-  
+  const windowTime = 0.05;
+  const bucket = Math.floor(currentTime * 20);
+  const activeHits = (HIT_INDEX.get(bucket) || []).filter(
+    (h) => h.time <= currentTime && h.time > currentTime - windowTime
+  );
+
   let mask = 0;
   let sampleSet = 1;
-  let isHit = activeHits.length > 0;
-  
+  const isHit = activeHits.length > 0;
+
   for (const h of activeHits) {
     if (h.hitSound) mask |= h.hitSound;
     if (h.sampleSet) sampleSet = h.sampleSet;
   }
 
   // A hit is Normal if it's 0, 1, or just acts as base pulse
-  // Actually, let's treat any hit object as triggering base normal pulse unless it's strictly a whistle only, 
-  // but to follow instructions exactly: "0 atau 1".
-  const hasNormal = isHit && ((mask === 0 || mask === 1) || (mask > 3)); // Assume it triggers pulse
+  const hasNormal = isHit && ((mask === 0 || mask === 1) || (mask > 3));
   const hasWhistle = (mask & 2) !== 0;
   const hasFinish = (mask & 4) !== 0;
   const hasClap = (mask & 8) !== 0;
+
+  const osuEvent = useMemo(
+    () => ({
+      isHit,
+      hasNormal,
+      hasWhistle,
+      hasFinish,
+      hasClap,
+      sampleSet,
+      mask
+    }),
+    [isHit, hasNormal, hasWhistle, hasFinish, hasClap, sampleSet, mask]
+  );
 
   return {
     currentTime,
@@ -124,14 +150,6 @@ export function useSatelliteSync() {
     isPlaying,
     volume,
     setVolume,
-    osuEvent: {
-      isHit,
-      hasNormal,
-      hasWhistle,
-      hasFinish,
-      hasClap,
-      sampleSet,
-      mask
-    }
+    osuEvent
   };
 }

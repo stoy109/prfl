@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LYRIC_TIMINGS } from '../constants';
-import '../index.css';
 
 export function LyricDisplay({ currentTime, mode }) {
   const activeLyricIndex = useMemo(() => {

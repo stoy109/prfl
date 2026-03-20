@@ -9,6 +9,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
   const particlesRef = useRef([]);
   const whistlesRef = useRef([]); // For Whistle hit sparkles
   const tRef = useRef(0);
+  const lastWhistleRef = useRef(false);
 
   useEffect(() => {
     particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => ({
@@ -20,10 +21,11 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
     }));
   }, []);
 
-  // Add Whistle sparkle when event fires
+  // Add Whistle sparkle when event fires (once per whistle, not every frame)
   useEffect(() => {
-    if (osuEvent.hasWhistle) {
-      for(let i=0; i<5; i++) {
+    if (osuEvent.hasWhistle && !lastWhistleRef.current) {
+      lastWhistleRef.current = true;
+      for (let i = 0; i < 5; i++) {
         whistlesRef.current.push({
           x: (window.innerWidth * 0.5) + (Math.random() * 200 - 100),
           y: (window.innerHeight * 0.5) + (Math.random() * 200 - 100),
@@ -33,7 +35,8 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
         });
       }
     }
-  }, [osuEvent]);
+    if (!osuEvent.hasWhistle) lastWhistleRef.current = false;
+  }, [osuEvent.hasWhistle]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

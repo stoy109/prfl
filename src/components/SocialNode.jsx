@@ -1,7 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { Youtube, Video, Box, Gamepad2, Instagram } from 'lucide-react';
-import '../index.css';
 
 const icons = { Youtube, Video, Box, Gamepad2, Instagram };
 
@@ -12,20 +11,21 @@ export function SocialNode({ platform, url, color, icon, behavior, mode, osuEven
   
   // DVD-like bouncing for BUILD_UP_1
   const [position, setPosition] = useState({ x: (Math.random() - 0.5) * window.innerWidth * 0.8, y: (Math.random() - 0.5) * window.innerHeight * 0.8 });
-  const [velocity, setVelocity] = useState({ x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 });
-  
+  const velocityRef = useRef({ x: (Math.random() - 0.5) * 8, y: (Math.random() - 0.5) * 8 });
+
   useEffect(() => {
     if (mode === 'BUILD_UP_1') {
       const interval = setInterval(() => {
-        setPosition(prev => {
-          let newX = prev.x + velocity.x;
-          let newY = prev.y + velocity.y;
-          let newVelX = velocity.x;
-          let newVelY = velocity.y;
-          
-          const maxX = window.innerWidth / 2 - 50; // Keep some margin
+        const v = velocityRef.current;
+        setPosition((prev) => {
+          let newX = prev.x + v.x;
+          let newY = prev.y + v.y;
+          let newVelX = v.x;
+          let newVelY = v.y;
+
+          const maxX = window.innerWidth / 2 - 50;
           const maxY = window.innerHeight / 2 - 50;
-          
+
           if (newX > maxX || newX < -maxX) {
             newVelX = -newVelX;
             newX = Math.max(-maxX, Math.min(maxX, newX));
@@ -34,15 +34,15 @@ export function SocialNode({ platform, url, color, icon, behavior, mode, osuEven
             newVelY = -newVelY;
             newY = Math.max(-maxY, Math.min(maxY, newY));
           }
-          
-          setVelocity({ x: newVelX, y: newVelY });
+
+          velocityRef.current = { x: newVelX, y: newVelY };
           return { x: newX, y: newY };
         });
-      }, 16); // ~60fps
-      
+      }, 16);
+
       return () => clearInterval(interval);
     }
-  }, [mode, velocity.x, velocity.y]);
+  }, [mode]);
   
   const IconComponent = icons[icon] || Box;
 

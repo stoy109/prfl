@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import '../index.css';
 
 export function DiscordProfile({ lanyardData, osuEvent, mode, intensity }) {
   if (!lanyardData) return null;

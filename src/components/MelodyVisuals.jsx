@@ -1,7 +1,35 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import melodyEvents from '../melody_events.json';
-import '../index.css';
+
+function buildTimeIndex(events, bucketScale = 2) {
+  const index = new Map();
+  for (const e of events) {
+    const key = Math.floor(e.time * bucketScale);
+    if (!index.has(key)) index.set(key, []);
+    index.get(key).push(e);
+  }
+  return index;
+}
+
+function queryTimeRange(index, currentTime, duration, bucketScale = 2) {
+  const startBucket = Math.floor((currentTime - duration) * bucketScale);
+  const endBucket = Math.floor(currentTime * bucketScale);
+  const result = [];
+  for (let k = startBucket; k <= endBucket; k++) {
+    const bucket = index.get(k) || [];
+    for (const e of bucket) {
+      if (currentTime >= e.time && currentTime < e.time + duration) {
+        result.push(e);
+      }
+    }
+  }
+  return result;
+}
+
+const RADAR_INDEX = buildTimeIndex(melodyEvents.radar || [], 2);
+const SPOTLIGHT_INDEX = buildTimeIndex(melodyEvents.spotlight || [], 10);
+const STARBURST_INDEX = buildTimeIndex(melodyEvents.starBurst || [], 2);
 
 const CONNECTED_SLIDER_GAP_MS = 50;
 const SLIDER_GAP_SEC = CONNECTED_SLIDER_GAP_MS / 1000;
@@ -38,19 +66,16 @@ export function MelodyVisuals({ currentTime, mode, intensity }) {
   const mergedSliderRanges = useMergedSliderRanges();
   const sliderActive = isInSliderRange(currentTime, mergedSliderRanges);
 
-  const spotlightIndexRef = useRef(0);
+  const [activeSpotlights, setActiveSpotlights] = useState(0);
   const lastSpotlightTimeRef = useRef(-1);
 
-  // Spotlight: cycling index on each hit
-  const activeSpotlights = useMemo(() => {
-    const hits = (melodyEvents.spotlight || []).filter(
-      (e) => currentTime >= e.time && currentTime < e.time + 0.1
-    );
+  // Spotlight: cycling index on each hit (effect, not useMemo side effect)
+  useEffect(() => {
+    const hits = queryTimeRange(SPOTLIGHT_INDEX, currentTime, 0.1, 10);
     if (hits.length > 0 && hits[0].time !== lastSpotlightTimeRef.current) {
       lastSpotlightTimeRef.current = hits[0].time;
-      spotlightIndexRef.current = (spotlightIndexRef.current + 1) % 5;
+      setActiveSpotlights((prev) => (prev + 1) % 5);
     }
-    return spotlightIndexRef.current;
   }, [currentTime]);
 
   const spotlightRotation = useRef(
@@ -58,18 +83,21 @@ export function MelodyVisuals({ currentTime, mode, intensity }) {
   );
 
   // Radar rings: events where currentTime is within [event.time, event.time + 1.5]
-  const radarRings = useMemo(() => {
-    return (melodyEvents.radar || []).filter(
-      (e) => currentTime >= e.time && currentTime < e.time + 1.5
-    );
-  }, [currentTime]);
+  const radarRings = useMemo(
+    () => queryTimeRange(RADAR_INDEX, currentTime, 1.5),
+    [currentTime]
+  );
 
-  // StarBurst: spawn particles for events in last 0.5s
-  const starBurstTriggers = useMemo(() => {
-    return (melodyEvents.starBurst || []).filter(
-      (e) => currentTime >= e.time && currentTime < e.time + 0.8
-    );
-  }, [currentTime]);
+  // StarBurst: spawn particles for events in window [event.time, event.time + 0.8]
+  const starBurstTriggers = useMemo(
+    () => queryTimeRange(STARBURST_INDEX, currentTime, 0.8),
+    [currentTime]
+  );
+
+  const hasRecentSpotlightHit = useMemo(
+    () => queryTimeRange(SPOTLIGHT_INDEX, currentTime, 0.3, 10).length > 0,
+    [currentTime]
+  );
 
   return (
     <>
@@ -133,11 +161,7 @@ export function MelodyVisuals({ currentTime, mode, intensity }) {
             index={i}
             isActive={i === activeSpotlights}
             baseRotation={spotlightRotation.current[i]}
-            hasRecentHit={
-              (melodyEvents.spotlight || []).some(
-                (e) => currentTime >= e.time && currentTime < e.time + 0.3
-              ) && i === activeSpotlights
-            }
+            hasRecentHit={hasRecentSpotlightHit && i === activeSpotlights}
           />
         ))}
       </div>

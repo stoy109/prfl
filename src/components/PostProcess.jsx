@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import '../index.css';
 
 export function PostProcess({ children, mode, osuEvent }) {
   const [finishFlash, setFinishFlash] = useState(false);

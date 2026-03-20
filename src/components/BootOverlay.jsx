@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import '../index.css';
 
 export function BootOverlay({ actived, onActivate }) {
   const [rain, setRain] = useState([]);

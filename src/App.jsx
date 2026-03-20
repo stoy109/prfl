@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSatelliteSync } from './hooks/useSatelliteSync';
 import { BootOverlay } from './components/BootOverlay';
@@ -7,11 +7,12 @@ import { NodeGallery } from './components/NodeGallery';
 import { LyricDisplay } from './components/LyricDisplay';
 import { MelodyVisuals } from './components/MelodyVisuals';
 import { PostProcess } from './components/PostProcess';
-import './index.css';
 
 function App() {
   const [activated, setActivated] = useState(false);
   const [mousePos, setMousePos] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const mousePosRef = useRef(mousePos);
+  const rafRef = useRef(null);
 
   const {
     currentTime,
@@ -26,9 +27,20 @@ function App() {
   } = useSatelliteSync();
 
   useEffect(() => {
-    const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+    const handleMouseMove = (e) => {
+      mousePosRef.current = { x: e.clientX, y: e.clientY };
+      if (!rafRef.current) {
+        rafRef.current = requestAnimationFrame(() => {
+          setMousePos(mousePosRef.current);
+          rafRef.current = null;
+        });
+      }
+    };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   useEffect(() => {

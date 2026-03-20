@@ -3,7 +3,6 @@ import { SocialNode } from './SocialNode';
 import { DiscordProfile } from './DiscordProfile';
 import { useLanyard } from '../hooks/useLanyard';
 import { LINKS_DATA } from '../constants';
-import '../index.css';
 
 export function NodeGallery({ mode, osuEvent, mousePos, intensity }) {
   const lanyardData = useLanyard('394962164231962625');
