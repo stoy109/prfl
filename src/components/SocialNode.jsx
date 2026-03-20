@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { motion, useAnimation } from 'framer-motion';
-import { Youtube, Video, Box, Gamepad2, Instagram } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Youtube, Video, Box, Gamepad2, Instagram, Github } from 'lucide-react';
 
-const icons = { Youtube, Video, Box, Gamepad2, Instagram };
+const icons = { Youtube, Video, Box, Gamepad2, Instagram, Github };
 
-export function SocialNode({ platform, url, color, icon, behavior, mode, osuEvent, mousePos, index, total, orbitPhase }) {
+export function SocialNode({ platform, url, color, icon, behavior, mode, osuEvent, index, total, orbitPhase }) {
   const nodeRef = useRef(null);
   const [hovered, setHovered] = useState(false);
   const frozenAngleRef = useRef(null);

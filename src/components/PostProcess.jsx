@@ -1,44 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 export function PostProcess({ children, mode, osuEvent }) {
   const [finishFlash, setFinishFlash] = useState(false);
+  const finishTimerRef = useRef(null);
 
-  const isResting = mode === 'REST' || mode === 'LOST_MELODY';
+  const isResting = mode.startsWith('REST') || mode === 'LOST_MELODY' || mode === 'MELODY_ONLY';
   const isDrop = mode === 'DROP_1' || mode === 'DROP_2';
   const heavyGlitch = mode === 'INTRO' || mode.includes('BUILD_UP') || mode === 'OUTRO' || mode === 'BUILD_UP_FINAL';
   
   // Finish hit causes Chromatic Aberration flash
   useEffect(() => {
-    if (osuEvent.hasFinish) {
-      setFinishFlash(true);
-      const timer = setTimeout(() => setFinishFlash(false), 100);
-      return () => clearTimeout(timer);
-    }
-  }, [osuEvent]);
+    if (!osuEvent.hasFinish) return;
+    setFinishFlash(true);
+    if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+    finishTimerRef.current = setTimeout(() => {
+      setFinishFlash(false);
+      finishTimerRef.current = null;
+    }, 100);
+  }, [osuEvent.hasFinish]);
+
+  useEffect(() => {
+    return () => {
+      if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+    };
+  }, []);
 
   // Rest: Grayscale and blur
-  const filterStyle = [
+  const filterStyle = useMemo(() => [
     isResting ? 'blur(4px)' : 'blur(0px)',
     isResting ? 'grayscale(100%) contrast(0.5)' : 'grayscale(0%) contrast(1)',
     heavyGlitch ? 'contrast(1.35) saturate(1.15) hue-rotate(10deg)' : 'contrast(1) saturate(1) hue-rotate(0deg)',
     mode === 'DROP_2' ? 'hue-rotate(90deg)' : ''
-  ].join(' ');
+  ].join(' '), [heavyGlitch, isResting, mode]);
 
   // Global vignette: vignette yang sangat kabur pada Rest, bloom pada Drop
-  let vignetteRadius = '80%';
-  let bloom = '0px';
-
-  if (mode.includes('BUILD_UP')) {
-    vignetteRadius = '40%';
-  } else if (isDrop) {
-    vignetteRadius = '120%';
-    bloom = '10px';
-  } else if (isResting) {
-    vignetteRadius = '30%'; // Extremely tight vignette
-  }
+  const { vignetteRadius, bloom } = useMemo(() => {
+    if (mode.includes('BUILD_UP')) {
+      return { vignetteRadius: '40%', bloom: '0px' };
+    }
+    if (isDrop) {
+      return { vignetteRadius: '120%', bloom: '10px' };
+    }
+    if (isResting) {
+      return { vignetteRadius: '30%', bloom: '0px' };
+    }
+    return { vignetteRadius: '80%', bloom: '0px' };
+  }, [isDrop, isResting, mode]);
 
   // Grid distortion via scale and skew during drops
-  const gridTransform = isDrop && osuEvent.isHit ? 'perspective(600px) rotateX(60deg) scale(2.1) skew(2deg)' : 'perspective(600px) rotateX(60deg) scale(2) skew(0deg)';
+  const gridTransform = useMemo(
+    () => (isDrop && osuEvent.isHit
+      ? 'perspective(600px) rotateX(60deg) scale(2.1) skew(2deg)'
+      : 'perspective(600px) rotateX(60deg) scale(2) skew(0deg)'),
+    [isDrop, osuEvent.isHit]
+  );
 
   return (
     <div

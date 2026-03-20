@@ -69,6 +69,7 @@ export const LYRIC_TIMINGS = [
 ];
 
 export const LINKS_DATA = [
+  { platform: 'GitHub', url: 'https://github.com/stoy109', color: '#6e7681', icon: 'Github', behavior: 'Orbiting Source Beacon' },
   { platform: 'YouTube', url: 'https://youtube.com/@yots1094', color: '#ff0000', icon: 'Youtube', behavior: 'Pulse on Snare' },
   { platform: 'TikTok', url: 'https://tiktok.com/@dypu119', color: '#00f2fe', icon: 'Video', behavior: 'Chromatic Aberration' }, // Using lucide-react generic Video or similar instead of TikTok explicitly, or custom svg later
   { platform: 'Roblox', url: 'https://roblox.com/users/465013391', color: '#aaaaaa', icon: 'Box', behavior: 'Floating Rotation' },

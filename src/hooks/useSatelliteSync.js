@@ -27,6 +27,11 @@ export function useSatelliteSync() {
   const soundRef = useRef(null);
   const requestRef = useRef(null);
   const driftRef = useRef(null);
+  const currentTimeRef = useRef(0);
+
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
 
   useEffect(() => {
     soundRef.current = new Howl({
@@ -87,13 +92,13 @@ export function useSatelliteSync() {
       if (typeof t !== 'number') return;
 
       // If React state has drifted (tab throttling, raf hiccups), snap back.
-      if (Math.abs(t - currentTime) > 0.1) setCurrentTime(t);
+      if (Math.abs(t - currentTimeRef.current) > 0.1) setCurrentTime(t);
     }, 500);
 
     return () => {
       if (driftRef.current) clearInterval(driftRef.current);
     };
-  }, [isPlaying, currentTime]);
+  }, [isPlaying]);
 
   const currentStructure = SONG_STRUCTURE.find(
     (section) => currentTime >= section.start && currentTime < section.end

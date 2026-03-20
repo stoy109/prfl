@@ -4,7 +4,7 @@ function getParticleCount() {
   return window.matchMedia('(max-width: 768px)').matches ? 80 : 300;
 }
 
-export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent }) {
+export function Atmosphere({ intensity, motionScale, mode, osuEvent }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
 
@@ -13,6 +13,21 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
   const whistlesRef = useRef([]); // For Whistle hit sparkles
   const tRef = useRef(0);
   const lastWhistleRef = useRef(false);
+  const intensityRef = useRef(intensity);
+  const motionScaleRef = useRef(motionScale);
+  const modeRef = useRef(mode);
+
+  useEffect(() => {
+    intensityRef.current = intensity;
+  }, [intensity]);
+
+  useEffect(() => {
+    motionScaleRef.current = motionScale;
+  }, [motionScale]);
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   useEffect(() => {
     const mql = window.matchMedia('(max-width: 768px)');
@@ -55,7 +70,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
 
     const handleResize = () => {
       const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 4);
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 2);
       const w = window.innerWidth;
       const h = window.innerHeight;
       canvas.width = w * dpr;
@@ -74,20 +89,23 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
       const height = window.innerHeight;
       const cx = width / 2;
       const cy = height / 2;
+      const activeIntensity = intensityRef.current;
+      const activeMotionScale = motionScaleRef.current;
+      const activeMode = modeRef.current;
 
       // Dark background trail factor
-      const trailFactor = intensity > 1.0 || mode.includes('BUILD_UP') ? 0.3 : 0.85;
+      const trailFactor = activeIntensity > 1.0 || activeMode.includes('BUILD_UP') ? 0.3 : 0.85;
       ctx.fillStyle = `rgba(2, 6, 23, ${trailFactor})`; // Slate-950
       ctx.fillRect(0, 0, width, height);
 
       // Modes
-      const isRest = mode.startsWith('REST') || mode === 'MELODY_ONLY';
-      const isVerse = mode.startsWith('VERSE');
-      const isPreBuildUp = mode.startsWith('PRE_BUILD');
-      const isBuildUp = mode.includes('BUILD_UP');
-      const isDrop = mode.startsWith('DROP');
+      const isRest = activeMode.startsWith('REST') || activeMode === 'MELODY_ONLY';
+      const isVerse = activeMode.startsWith('VERSE');
+      const isPreBuildUp = activeMode.startsWith('PRE_BUILD');
+      const isBuildUp = activeMode.includes('BUILD_UP');
+      const isDrop = activeMode.startsWith('DROP');
 
-      const speed = 2 * (1 + intensity * 5) * (1 + motionScale);
+      const speed = 2 * (1 + activeIntensity * 5) * (1 + activeMotionScale);
 
       for (let i = 0; i < particleCount; i++) {
         let p = particlesRef.current[i];
@@ -99,27 +117,27 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
           // Signal warning: jitter + slight centripetal pull (autonomous).
           const dx = cx - p.x;
           const dy = cy - p.y;
-          const jitter = (Math.random() - 0.5) * 6 * Math.min(1, intensity);
-          p.x += dx * 0.01 * intensity + jitter;
-          p.y += dy * 0.01 * intensity - jitter;
+          const jitter = (Math.random() - 0.5) * 6 * Math.min(1, activeIntensity);
+          p.x += dx * 0.01 * activeIntensity + jitter;
+          p.y += dy * 0.01 * activeIntensity - jitter;
           p.z -= speed * 0.6;
         } else if (isBuildUp) {
           // Vertical streams
           p.y -= speed * 3.5;
-          p.x += Math.sin(tRef.current + i * 0.05) * (0.4 + intensity);
+          p.x += Math.sin(tRef.current + i * 0.05) * (0.4 + activeIntensity);
         } else {
           // Normal Z movement towards camera
           p.z -= speed;
           if (isVerse) {
             // Verse: slow vertical drift downwards (stable transmission feel).
-            p.y += (0.6 + intensity) * (0.8 + motionScale);
+            p.y += (0.6 + activeIntensity) * (0.8 + activeMotionScale);
           } else if (isRest) {
             // Rest: very slow drift.
             p.y += 0.2;
           } else if (isDrop) {
             // Drop: slight turbulence without cursor coupling.
-            p.x += (Math.random() - 0.5) * (0.8 + intensity);
-            p.y += (Math.random() - 0.5) * (0.6 + intensity);
+            p.x += (Math.random() - 0.5) * (0.8 + activeIntensity);
+            p.y += (Math.random() - 0.5) * (0.6 + activeIntensity);
           }
         }
 
@@ -150,7 +168,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
         const alpha = Math.max(0.1, 1 - p.z / 1000);
 
         ctx.beginPath();
-        if (intensity > 0.8 || isBuildUp) {
+        if (activeIntensity > 0.8 || isBuildUp) {
           // Warp lines or vertical lines
           ctx.moveTo(ox, oy);
           ctx.lineTo(x, y);
@@ -191,7 +209,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [intensity, motionScale, mode, particleCount]);
+  }, [particleCount]);
 
   return (
     <canvas 

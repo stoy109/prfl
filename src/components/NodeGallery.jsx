@@ -4,7 +4,7 @@ import { DiscordProfile } from './DiscordProfile';
 import { useLanyard } from '../hooks/useLanyard';
 import { LINKS_DATA } from '../constants';
 
-export function NodeGallery({ mode, osuEvent, mousePos, intensity }) {
+export function NodeGallery({ mode, osuEvent, intensity }) {
   const lanyardData = useLanyard('394962164231962625');
   const [orbitPhase, setOrbitPhase] = useState(0);
   const rafRef = useRef(null);
@@ -41,7 +41,7 @@ export function NodeGallery({ mode, osuEvent, mousePos, intensity }) {
       osuEvent.hasNormal ? 0.03 :
       0.02;
     boostRef.current = Math.min(0.15, boostRef.current + bump);
-  }, [osuEvent]);
+  }, [osuEvent.isHit, osuEvent.hasFinish, osuEvent.hasClap, osuEvent.hasWhistle, osuEvent.hasNormal]);
 
   return (
     <div className="gallery-container">
@@ -67,7 +67,6 @@ export function NodeGallery({ mode, osuEvent, mousePos, intensity }) {
             behavior={link.behavior}
             mode={mode}
             osuEvent={osuEvent}
-            mousePos={mousePos}
             orbitPhase={orbitPhase}
           />
         ))}

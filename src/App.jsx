@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSatelliteSync } from './hooks/useSatelliteSync';
 import { BootOverlay } from './components/BootOverlay';
@@ -10,9 +10,6 @@ import { PostProcess } from './components/PostProcess';
 
 function App() {
   const [activated, setActivated] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
-  const mousePosRef = useRef(mousePos);
-  const rafRef = useRef(null);
 
   const {
     currentTime,
@@ -25,39 +22,6 @@ function App() {
     volume,
     setVolume
   } = useSatelliteSync();
-
-  useEffect(() => {
-    const getCoords = (e) => {
-      if (e.touches?.[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      return { x: e.clientX, y: e.clientY };
-    };
-
-    const handlePointer = (e) => {
-      const { x, y } = getCoords(e);
-      mousePosRef.current = { x, y };
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          setMousePos(mousePosRef.current);
-          rafRef.current = null;
-        });
-      }
-    };
-
-    const handleTouchEnd = () => {
-      mousePosRef.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-      setMousePos(mousePosRef.current);
-    };
-
-    window.addEventListener('mousemove', handlePointer);
-    window.addEventListener('touchmove', handlePointer);
-    window.addEventListener('touchend', handleTouchEnd);
-    return () => {
-      window.removeEventListener('mousemove', handlePointer);
-      window.removeEventListener('touchmove', handlePointer);
-      window.removeEventListener('touchend', handleTouchEnd);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     if (activated) {
@@ -79,8 +43,15 @@ function App() {
   const scalePulse = osuEvent.hasNormal ? 1.01 : 1.0;
 
   // Finish bitmask -> Chromatic aberration flash in App container space (simulated by shaking x/y and using text-shadow in CSS, or simple CSS transform)
-  const kineticShakeX = (isDrop || osuEvent.hasFinish) ? (Math.random() * 20 - 10) * (osuEvent.isHit ? 1 : 0) : 0;
-  const kineticShakeY = (isDrop || osuEvent.hasFinish) ? (Math.random() * 10 - 5) * (osuEvent.isHit ? 1 : 0) : 0;
+  const kineticShake = useMemo(() => {
+    if (!(isDrop || osuEvent.hasFinish) || !osuEvent.isHit) {
+      return { x: 0, y: 0 };
+    }
+    return {
+      x: Math.random() * 20 - 10,
+      y: Math.random() * 10 - 5
+    };
+  }, [isDrop, osuEvent.hasFinish, osuEvent.isHit, osuEvent.mask]);
 
   return (
     <>
@@ -93,8 +64,8 @@ function App() {
       <PostProcess mode={mode} osuEvent={osuEvent}>
         <motion.div
           animate={{
-            x: kineticShakeX,
-            y: kineticShakeY,
+            x: kineticShake.x,
+            y: kineticShake.y,
             scale: scalePulse
           }}
           transition={{
@@ -105,7 +76,7 @@ function App() {
         >
           {activated && (
             <>
-              <Atmosphere intensity={intensity} motionScale={motionScale} mousePos={mousePos} mode={mode} osuEvent={osuEvent} />
+              <Atmosphere intensity={intensity} motionScale={motionScale} mode={mode} osuEvent={osuEvent} />
 
               <MelodyVisuals currentTime={currentTime} mode={mode} intensity={intensity} />
 
@@ -118,7 +89,7 @@ function App() {
                 <div>MASK: {osuEvent.mask.toString(2).padStart(4, '0')}</div>
               </div>
 
-              <NodeGallery mode={mode} osuEvent={osuEvent} mousePos={mousePos} intensity={intensity} />
+              <NodeGallery mode={mode} osuEvent={osuEvent} intensity={intensity} />
 
               <LyricDisplay currentTime={currentTime} mode={mode} />
 
