@@ -8,19 +8,34 @@ export function BootOverlay({ actived, onActivate }) {
     if (actived) return;
 
     let lastTime = 0;
-    const handleMouseMove = (e) => {
+    const getCoords = (e) => {
+      if (e.touches?.[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointer = (e) => {
       const now = Date.now();
-      if (now - lastTime > 30) { // throttle to 30ms ~30fps
-        setRain(prev => [
-          ...prev.slice(-15), // keep array small
-          { id: Math.random(), x: e.clientX, y: e.clientY, text: Math.random() > 0.5 ? '0' : '1' }
+      if (now - lastTime > 30) {
+        const { x, y } = getCoords(e);
+        setRain((prev) => [
+          ...prev.slice(-15),
+          { id: Math.random(), x, y, text: Math.random() > 0.5 ? '0' : '1' }
         ]);
         lastTime = now;
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    const handleTouchMove = (e) => {
+      e.preventDefault();
+      handlePointer(e);
+    };
+
+    window.addEventListener('mousemove', handlePointer);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener('mousemove', handlePointer);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
   }, [actived]);
 
   if (actived) return null;
@@ -74,7 +89,7 @@ export function BootOverlay({ actived, onActivate }) {
         transition={{ delay: 1 }}
         className="boot-subtitle"
       >
-        Click anywhere to synchronize
+        Tap anywhere to synchronize
       </motion.div>
     </motion.div>
   );

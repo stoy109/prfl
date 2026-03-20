@@ -379,10 +379,127 @@ body, html {
   accent-color: var(--accent-indigo);
 }
 
+/* Reduced motion - accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .scanlines {
+    animation: none;
+  }
+
+  .lyric-ink-bleed {
+    animation: none;
+    filter: blur(0) contrast(1);
+  }
+
+  .temporal-slider-shake {
+    animation: none !important;
+  }
+}
+
 /* Melody Visuals - Temporal Slider micro camera shake */
+.temporal-slider-shake {
+  animation: temporal-shake 0.05s ease-in-out infinite;
+}
+
 @keyframes temporal-shake {
   0%, 100% { transform: translate(0, 0); }
   25% { transform: translate(1px, -1px); }
   50% { transform: translate(-1px, 1px); }
   75% { transform: translate(-1px, -1px); }
+}
+
+/* Mobile layout and touch targets */
+@media (max-width: 768px) {
+  .hud-info {
+    top: max(1rem, env(safe-area-inset-top));
+    left: max(1rem, env(safe-area-inset-left));
+    font-size: 0.65rem;
+  }
+
+  .lyric-text {
+    font-size: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .discord-profile-card {
+    min-width: 0;
+    max-width: calc(100vw - 2rem);
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+    border-radius: 1.5rem;
+  }
+
+  .card-avatar-section {
+    width: 4rem;
+    height: 4rem;
+  }
+
+  .card-username {
+    font-size: 1.2rem;
+  }
+
+  .card-status-text {
+    font-size: 0.875rem;
+  }
+
+  .volume-control {
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .volume-control input[type="range"] {
+    width: 120px;
+    min-height: 44px;
+  }
+
+  .social-node {
+    min-width: 44px;
+    min-height: 44px;
+    width: 4rem;
+    height: 4rem;
+    top: calc(50% - 2rem);
+    left: calc(50% - 2rem);
+  }
+
+  .social-node-ghost {
+    width: 4rem;
+    height: 4rem;
+    top: calc(50% - 2rem);
+    left: calc(50% - 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .hud-info {
+    font-size: 0.6rem;
+  }
+
+  .lyric-text {
+    font-size: 1.25rem;
+  }
+
+  .discord-profile-card {
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .card-avatar-section {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .card-username {
+    font-size: 1rem;
+  }
+
+  .boot-title {
+    font-size: 1.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  .boot-subtitle {
+    font-size: 0.75rem;
+    margin-top: 1.5rem;
+  }
 }

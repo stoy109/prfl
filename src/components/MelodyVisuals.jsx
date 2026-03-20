@@ -62,7 +62,21 @@ function isInSliderRange(currentTime, mergedRanges) {
   );
 }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    const handleChange = (e) => setIsMobile(e.matches);
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
+  }, []);
+  return isMobile;
+}
+
 export function MelodyVisuals({ currentTime, mode, intensity }) {
+  const isMobile = useIsMobile();
   const mergedSliderRanges = useMergedSliderRanges();
   const sliderActive = isInSliderRange(currentTime, mergedSliderRanges);
 
@@ -162,6 +176,7 @@ export function MelodyVisuals({ currentTime, mode, intensity }) {
             isActive={i === activeSpotlights}
             baseRotation={spotlightRotation.current[i]}
             hasRecentHit={hasRecentSpotlightHit && i === activeSpotlights}
+            isMobile={isMobile}
           />
         ))}
       </div>
@@ -181,7 +196,7 @@ export function MelodyVisuals({ currentTime, mode, intensity }) {
       >
         <AnimatePresence mode="popLayout">
           {starBurstTriggers.map((e, i) => (
-            <StarBurst key={`sb-${e.time}-${i}`} startTime={e.time} currentTime={currentTime} mode={mode} intensity={intensity} />
+            <StarBurst key={`sb-${e.time}-${i}`} startTime={e.time} currentTime={currentTime} mode={mode} intensity={intensity} isMobile={isMobile} />
           ))}
         </AnimatePresence>
       </div>
@@ -189,7 +204,7 @@ export function MelodyVisuals({ currentTime, mode, intensity }) {
       {/* 4. Temporal Slider (Type 128) - Grayscale + motion blur overlay */}
       <AnimatePresence>
         {sliderActive && (
-          <TemporalSliderOverlay currentTime={currentTime} mergedRanges={mergedSliderRanges} />
+          <TemporalSliderOverlay currentTime={currentTime} mergedRanges={mergedSliderRanges} isMobile={isMobile} />
         )}
       </AnimatePresence>
     </>
@@ -264,9 +279,10 @@ function RadarRing({ startTime, currentTime }) {
   );
 }
 
-function SpotlightBeam({ index, isActive, baseRotation, hasRecentHit }) {
+function SpotlightBeam({ index, isActive, baseRotation, hasRecentHit, isMobile }) {
   const angle = (index / 5) * 360;
   const opacity = isActive && hasRecentHit ? 0.8 : 0.15;
+  const blurAmount = isMobile ? 40 : 100;
 
   return (
     <motion.div
@@ -278,7 +294,7 @@ function SpotlightBeam({ index, isActive, baseRotation, hasRecentHit }) {
         width: '150%',
         height: 200,
         background: `linear-gradient(to bottom, transparent 0%, rgba(99, 102, 241, 0.2) 30%, rgba(99, 102, 241, 0.5) 50%, transparent 100%)`,
-        filter: 'blur(100px)',
+        filter: `blur(${blurAmount}px)`,
         transformOrigin: 'center center',
         transform: `translate(-50%, -50%) rotate(${angle + baseRotation}deg)`,
         opacity,
@@ -295,25 +311,28 @@ function SpotlightBeam({ index, isActive, baseRotation, hasRecentHit }) {
 
 const BASE_STAR_COUNT = 18;
 const DROP_STAR_COUNT = 32;
+const BASE_STAR_COUNT_MOBILE = 10;
+const DROP_STAR_COUNT_MOBILE = 18;
 
-function StarBurst({ startTime, currentTime, mode, intensity }) {
+function StarBurst({ startTime, currentTime, mode, intensity, isMobile }) {
   const isDrop = mode && (mode.includes('DROP') || mode.includes('BUILD_UP_FINAL'));
-  // Expands further and bigger during drops
   const multiplier = isDrop ? (1.5 + intensity) : 1.0;
   const explosionDuration = isDrop ? 0.8 : 0.6;
+  const starCount = isDrop
+    ? (isMobile ? DROP_STAR_COUNT_MOBILE : DROP_STAR_COUNT)
+    : (isMobile ? BASE_STAR_COUNT_MOBILE : BASE_STAR_COUNT);
 
   const elapsed = currentTime - startTime;
   if (elapsed < 0 || elapsed > explosionDuration) return null;
 
   const particles = useMemo(() => {
-    const starCount = isDrop ? DROP_STAR_COUNT : BASE_STAR_COUNT;
     return Array.from({ length: starCount }, (_, i) => {
       const angle = (i / starCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
       const speed = (80 + Math.random() * 120) * multiplier;
       const size = (4 + Math.random() * 6) * multiplier;
       return { angle, speed, size, id: i };
     });
-  }, [isDrop, multiplier]);
+  }, [isDrop, multiplier, starCount]);
 
   return (
     <div
@@ -373,7 +392,7 @@ function StarBurst({ startTime, currentTime, mode, intensity }) {
   );
 }
 
-function TemporalSliderOverlay({ currentTime, mergedRanges }) {
+function TemporalSliderOverlay({ currentTime, mergedRanges, isMobile }) {
   const activeRange = mergedRanges.find(
     (r) => currentTime >= r.startTime && currentTime <= r.endTime
   );
@@ -382,17 +401,16 @@ function TemporalSliderOverlay({ currentTime, mergedRanges }) {
     ? (currentTime - activeRange.startTime) / duration
     : 0;
 
-  // Color transition Indigo -> Rose over slider duration
-  const hueShift = progress * 330; // Indigo ~238deg -> Rose ~346deg
+  const hueShift = progress * 330;
   const invertAmount = 0.05;
+  const backdropFilter = isMobile
+    ? `grayscale(100%) hue-rotate(${hueShift}deg) invert(${invertAmount})`
+    : `grayscale(100%) blur(3px) hue-rotate(${hueShift}deg) invert(${invertAmount})`;
 
   return (
     <motion.div
-      className="temporal-slider-overlay"
       initial={{ opacity: 0 }}
-      animate={{
-        opacity: 1,
-      }}
+      animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       style={{
@@ -400,10 +418,10 @@ function TemporalSliderOverlay({ currentTime, mergedRanges }) {
         inset: 0,
         zIndex: 25,
         pointerEvents: 'none',
-        backdropFilter: `grayscale(100%) blur(3px) hue-rotate(${hueShift}deg) invert(${invertAmount})`,
-        WebkitBackdropFilter: `grayscale(100%) blur(3px) hue-rotate(${hueShift}deg) invert(${invertAmount})`,
-        animation: 'temporal-shake 0.05s ease-in-out infinite',
+        backdropFilter,
+        WebkitBackdropFilter: backdropFilter,
       }}
+      className="temporal-slider-overlay temporal-slider-shake"
     />
   );
 }

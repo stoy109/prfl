@@ -1,25 +1,35 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
-const PARTICLE_COUNT = 300;
+function getParticleCount() {
+  return window.matchMedia('(max-width: 768px)').matches ? 80 : 300;
+}
 
 export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent }) {
   const canvasRef = useRef(null);
   const animationRef = useRef(null);
 
+  const [particleCount, setParticleCount] = useState(getParticleCount);
   const particlesRef = useRef([]);
   const whistlesRef = useRef([]); // For Whistle hit sparkles
   const tRef = useRef(0);
   const lastWhistleRef = useRef(false);
 
   useEffect(() => {
-    particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => ({
+    const mql = window.matchMedia('(max-width: 768px)');
+    const handleChange = () => setParticleCount(getParticleCount());
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    particlesRef.current = Array.from({ length: particleCount }, () => ({
       x: Math.random() * window.innerWidth,
       y: Math.random() * window.innerHeight,
       z: Math.random() * 1000 + 1,
       ox: 0,
       oy: 0
     }));
-  }, []);
+  }, [particleCount]);
 
   // Add Whistle sparkle when event fires (once per whistle, not every frame)
   useEffect(() => {
@@ -44,16 +54,24 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
     const ctx = canvas.getContext('2d');
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const isMobile = window.matchMedia('(max-width: 768px)').matches;
+      const dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 2 : 4);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
 
     const render = () => {
       tRef.current += 0.016;
-      const width = canvas.width;
-      const height = canvas.height;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
       const cx = width / 2;
       const cy = height / 2;
 
@@ -71,7 +89,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
 
       const speed = 2 * (1 + intensity * 5) * (1 + motionScale);
 
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
+      for (let i = 0; i < particleCount; i++) {
         let p = particlesRef.current[i];
         
         p.ox = p.x;
@@ -173,7 +191,7 @@ export function Atmosphere({ intensity, motionScale, mousePos, mode, osuEvent })
       window.removeEventListener('resize', handleResize);
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [intensity, motionScale, mode]);
+  }, [intensity, motionScale, mode, particleCount]);
 
   return (
     <canvas 

@@ -27,8 +27,14 @@ function App() {
   } = useSatelliteSync();
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      mousePosRef.current = { x: e.clientX, y: e.clientY };
+    const getCoords = (e) => {
+      if (e.touches?.[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointer = (e) => {
+      const { x, y } = getCoords(e);
+      mousePosRef.current = { x, y };
       if (!rafRef.current) {
         rafRef.current = requestAnimationFrame(() => {
           setMousePos(mousePosRef.current);
@@ -36,9 +42,19 @@ function App() {
         });
       }
     };
-    window.addEventListener('mousemove', handleMouseMove);
+
+    const handleTouchEnd = () => {
+      mousePosRef.current = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+      setMousePos(mousePosRef.current);
+    };
+
+    window.addEventListener('mousemove', handlePointer);
+    window.addEventListener('touchmove', handlePointer);
+    window.addEventListener('touchend', handleTouchEnd);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', handlePointer);
+      window.removeEventListener('touchmove', handlePointer);
+      window.removeEventListener('touchend', handleTouchEnd);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
